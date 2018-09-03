@@ -7,7 +7,7 @@ const data = require('./data.json');
 
 const schema = buildSchema(`
   type Query {
-    user(index: ID!): User
+    getUser(index: ID!): User
   }
   type User {
     id: ID
@@ -17,7 +17,9 @@ const schema = buildSchema(`
 `);
 
 const root = {
-  user: (root) => data[root.index],
+  getUser(root) {
+    return data[root.index];
+  },
 };
 
 const app = express();
