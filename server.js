@@ -3,14 +3,21 @@ const cors = require('cors');
 const graphqlHTTP = require('express-graphql');
 const { buildSchema } = require('graphql');
 
-const data = require('./data.json');
+let data = require('./data.json');
 
 const schema = buildSchema(`
   type Query {
     getUser(index: ID!): User
   }
+  type Mutation {
+    createUser(userInput: UserInput): User
+  }
   type User {
     id: ID
+    name: String
+    age: Int
+  }
+  input UserInput {
     name: String
     age: Int
   }
@@ -19,6 +26,18 @@ const schema = buildSchema(`
 const root = {
   getUser(root) {
     return data[root.index];
+  },
+  createUser({ userInput }) {
+    const id = String(Object.keys(data).length + 1);
+    data = {
+      ...data,
+      [id]: {
+        id,
+        name: userInput.name,
+        age: userInput.age,
+      },
+    };
+    console.log(data);
   },
 };
 
