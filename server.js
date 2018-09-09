@@ -6,46 +6,51 @@ const { buildSchema } = require('graphql');
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 
-// Connection URL
+/** 接続URL */
 const url = 'mongodb://localhost:27017';
 
-// Database Name
-const dbName = 'myproject';
+/** データベース名 */
+const dbName = 'myDB';
 
 /** Create */
-const insertDocuments = function(db, callback) {
-  // Get the documents collection
-  const collection = db.collection('documents');
-  // Insert some documents
-  collection.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }], function(err, result) {
-    assert.equal(err, null);
-    assert.equal(3, result.result.n);
-    assert.equal(3, result.ops.length);
-    console.log('Inserted 3 documents into the collection');
-    callback(result);
-  });
+const insertDocuments = (db, callback) => {
+  /** collectionを取得 */
+  const collection = db.collection('myCollection');
+  /** collectionにdocumentを追加 */
+  collection.insertMany(
+    [{ name: 'Dan', age: 18 }, { name: 'Bob', age: 22 }, { name: 'John', age: 30 }],
+    (err, result) => {
+      assert.equal(err, null);
+      assert.equal(3, result.result.n);
+      assert.equal(3, result.ops.length);
+      console.log('Inserted 3 documents into the collection');
+      callback(result);
+    },
+  );
 };
 
 /** Read */
-const findDocuments = function(db, callback) {
-  // Get the documents collection
-  const collection = db.collection('documents');
-  // Find some documents
-  collection.find({}).toArray(function(err, docs) {
-    // collection.find({ a: 3 }).toArray(function(err, docs) {
-    assert.equal(err, null);
-    console.log('Found the following records');
-    console.log(docs);
-    callback(docs);
-  });
+const findDocuments = (db, callback) => {
+  /** collectionを取得 */
+  const collection = db.collection('myCollection');
+  /** documentを検索（ageが20以上のdocumentのnameを取得） */
+  collection
+    .find({})
+    .project({ name: 1 })
+    .toArray((err, docs) => {
+      assert.equal(err, null);
+      console.log('Found the following records');
+      console.log(docs);
+      callback(docs);
+    });
 };
 
 /** Update */
-const updateDocument = function(db, callback) {
-  // Get the documents collection
-  const collection = db.collection('documents');
-  // Update document where a is 2, set b equal to 1
-  collection.updateOne({ a: 2 }, { $set: { b: 1 } }, function(err, result) {
+const updateDocument = (db, callback) => {
+  /** collectionを取得 */
+  const collection = db.collection('myCollection');
+  /** documentを更新（ageが19以下のdocumentに{ status: false }を追加） */
+  collection.updateMany({ age: { $lt: 20 } }, { $set: { status: false } }, (err, result) => {
     assert.equal(err, null);
     assert.equal(1, result.result.n);
     console.log('Updated the document with the field a equal to 2');
@@ -54,11 +59,11 @@ const updateDocument = function(db, callback) {
 };
 
 /** Delete */
-const removeDocument = function(db, callback) {
-  // Get the documents collection
-  const collection = db.collection('documents');
-  // Delete document where a is 3
-  collection.deleteOne({ a: 3 }, function(err, result) {
+const removeDocument = (db, callback) => {
+  /** collectionを取得 */
+  const collection = db.collection('myCollection');
+  /** documentを削除（statusがfalseのdocuentを削除） */
+  collection.deleteMany({ status: false }, (err, result) => {
     assert.equal(err, null);
     assert.equal(1, result.result.n);
     console.log('Removed the document with the field a equal to 3');
@@ -67,9 +72,8 @@ const removeDocument = function(db, callback) {
 };
 
 /** indexes */
-const indexCollection = function(db, callback) {
-  db.collection('documents').createIndex({ a: 1 }, null, function(err, results) {
-    console.log(results);
+const indexCollection = (db, callback) => {
+  db.collection('myCollection').createIndex({ name: 1 }, null, (err, results) => {
     callback();
   });
 };
