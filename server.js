@@ -13,24 +13,23 @@ const url = 'mongodb://localhost:27017';
 const dbName = 'myDB';
 
 /** Create */
-const insertDocuments = (db, callback) => {
+const insertDocuments = (db) => {
   /** collectionを取得 */
   const collection = db.collection('myCollection');
   /** collectionにdocumentを追加 */
-  collection.insertMany(
+  collection.insert(
     [{ name: 'Dan', age: 18 }, { name: 'Bob', age: 22 }, { name: 'John', age: 30 }],
     (err, result) => {
       assert.equal(err, null);
       assert.equal(3, result.result.n);
       assert.equal(3, result.ops.length);
       console.log('Inserted 3 documents into the collection');
-      callback(result);
     },
   );
 };
 
 /** Read */
-const findDocuments = (db, callback) => {
+const findDocuments = (db) => {
   /** collectionを取得 */
   const collection = db.collection('myCollection');
   /** documentを検索（ageが20以上のdocumentのnameを取得） */
@@ -41,12 +40,11 @@ const findDocuments = (db, callback) => {
       assert.equal(err, null);
       console.log('Found the following records');
       console.log(docs);
-      callback(docs);
     });
 };
 
 /** Update */
-const updateDocument = (db, callback) => {
+const updateDocument = (db) => {
   /** collectionを取得 */
   const collection = db.collection('myCollection');
   /** documentを更新（ageが19以下のdocumentに{ status: false }を追加） */
@@ -54,12 +52,11 @@ const updateDocument = (db, callback) => {
     assert.equal(err, null);
     assert.equal(1, result.result.n);
     console.log('Updated the document with the field a equal to 2');
-    callback(result);
   });
 };
 
 /** Delete */
-const removeDocument = (db, callback) => {
+const removeDocument = (db) => {
   /** collectionを取得 */
   const collection = db.collection('myCollection');
   /** documentを削除（statusがfalseのdocuentを削除） */
@@ -67,40 +64,45 @@ const removeDocument = (db, callback) => {
     assert.equal(err, null);
     assert.equal(1, result.result.n);
     console.log('Removed the document with the field a equal to 3');
-    callback(result);
   });
 };
 
 /** indexes */
-const indexCollection = (db, callback) => {
-  db.collection('myCollection').createIndex({ name: 1 }, null, (err, results) => {
-    callback();
-  });
+const indexCollection = (db) => {
+  db.collection('myCollection').createIndex({ name: 1 }, null, (err, results) => {});
 };
 
-// Use connect method to connect to the server
+/** 　サーバーに接続するためのconnectメソッド */
 MongoClient.connect(
   url,
   { useNewUrlParser: true },
-  (err, client) => {
+  async (err, client) => {
     assert.equal(null, err);
     console.log('Connected successfully to server');
 
     const db = client.db(dbName);
 
-    insertDocuments(db, () => {
-      indexCollection(db, () => {
-        updateDocument(db, () => {
-          findDocuments(db, () => {
-            removeDocument(db, () => {
-              findDocuments(db, () => {
-                client.close();
-              });
-            });
-          });
-        });
-      });
-    });
+    await insertDocuments(db);
+    await updateDocument(db);
+    await findDocuments(db);
+    await removeDocument(db);
+    await findDocuments(db);
+
+    client.close();
+
+    // insertDocuments(db, () => {
+    //   indexCollection(db, () => {
+    //     updateDocument(db, () => {
+    //       findDocuments(db, () => {
+    //         removeDocument(db, () => {
+    //           findDocuments(db, () => {
+    //             client.close();
+    //           });
+    //         });
+    //       });
+    //     });
+    //   });
+    // });
   },
 );
 
