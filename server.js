@@ -17,7 +17,7 @@ const insertDocuments = (db) => {
   /** collectionを取得 */
   const collection = db.collection('myCollection');
   /** collectionにdocumentを追加 */
-  collection.insert(
+  collection.insertMany(
     [{ name: 'Dan', age: 18 }, { name: 'Bob', age: 22 }, { name: 'John', age: 30 }],
     (err, result) => {
       assert.equal(err, null);
@@ -72,39 +72,31 @@ const indexCollection = (db) => {
   db.collection('myCollection').createIndex({ name: 1 }, null, (err, results) => {});
 };
 
-/** 　サーバーに接続するためのconnectメソッド */
-MongoClient.connect(
-  url,
-  { useNewUrlParser: true },
-  async (err, client) => {
-    assert.equal(null, err);
-    console.log('Connected successfully to server');
+(async function() {
+  let client;
 
+  try {
+    /** DBサーバーに接続 */
+    client = await MongoClient.connect(
+      url,
+      { useNewUrlParser: true },
+    );
+    /** DBを取得 */
     const db = client.db(dbName);
 
     await insertDocuments(db);
+    await indexCollection(db);
     await updateDocument(db);
     await findDocuments(db);
     await removeDocument(db);
     await findDocuments(db);
+  } catch (err) {
+    console.log(err.stack);
+  }
 
-    client.close();
-
-    // insertDocuments(db, () => {
-    //   indexCollection(db, () => {
-    //     updateDocument(db, () => {
-    //       findDocuments(db, () => {
-    //         removeDocument(db, () => {
-    //           findDocuments(db, () => {
-    //             client.close();
-    //           });
-    //         });
-    //       });
-    //     });
-    //   });
-    // });
-  },
-);
+  /** DBサーバーとの接続解除 */
+  client.close();
+})();
 
 let data = require('./data.json');
 
